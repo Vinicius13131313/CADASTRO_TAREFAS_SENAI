@@ -1,105 +1,117 @@
-const campoTarefa = document.getElementById("campo-tarefa");
-const botaoAdicionar = document.getElementById("botao-adicionar");
-const listaTarefas = document.getElementById("lista-tarefas");
-const contadorTarefas = document.getElementById("contador-tarefas");
-const botaoModoEscuro = document.getElementById("botao-modo-escuro");
-
-
-
-botaoAdicionar.addEventListener("click", adicionarTarefa);
-
-campoTarefa.addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-        adicionarTarefa();
-    }
-});
-
-function adicionarTarefa() {
-
-    const texto = campoTarefa.value.trim();
-
-    if (texto === "") {
-        return;
+class Produto {
+    constructor(descricao, valor, qtd) {
+        this.nome = descricao
+        this.preco = parseFloat(valor)
+        this.quantidade = parseInt(qtd)
     }
 
-    const item = document.createElement("li");
-
-    item.classList.add("item-tarefa");
-
-    item.innerHTML = `
-        <span>${texto}</span>
-
-        <div class="acoes-tarefa">
-
-            <button class="botao-acao concluir">
-                <i class="fa-solid fa-check"></i>
-            </button>
-
-            <button class="botao-acao excluir">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-
-        </div>
-    `;
-
-    const botaoConcluir = item.querySelector(".concluir");
-
-    botaoConcluir.addEventListener("click", function() {
-        item.classList.toggle("concluida");
-    });
-
-
-    const botaoExcluir = item.querySelector(".excluir");
-
-    botaoExcluir.addEventListener("click", function() {
-        item.remove();
-        atualizarContador();
-    });
-
-
-    listaTarefas.appendChild(item);
-
-    campoTarefa.value = "";
-
-    campoTarefa.focus();
-
-    atualizarContador();
-}
-
-
-function atualizarContador() {
-
-    const quantidade = listaTarefas.querySelectorAll(".item-tarefa").length;
-
-    if (quantidade === 0) {
-        contadorTarefas.textContent = "0 tarefas na lista";
-    }
-
-    else if (quantidade === 1) {
-        contadorTarefas.textContent = "1 tarefa na lista";
-    }
-
-    else {
-        contadorTarefas.textContent = `${quantidade} tarefas na lista`;
+    calcularSubtotal() {
+        return this.preco * this.quantidade
     }
 }
 
+const produtos = []
+const chavestorage = "sistema_estoque_produtos"
 
-    botaoModoEscuro.addEventListener("click", function() {
+function salvarProdutos() {
+    const dados = JSON.stringify(produtos)
+    localStorage.setItem(chavestorage, dados)
+}
 
-    document.body.classList.toggle("modoescuro");
+function carregarProdutos() {
+    const dados = localStorage.getItem(chavestorage)
 
-    const icone = botaoModoEscuro.querySelector("i");
+    if (dados) {
+        const produtosSalvos = JSON.parse(dados)
 
-    if (document.body.classList.contains("modoescuro")) {
+        produtosSalvos.forEach((item) => {
+            const produto = new Produto(
+                item.nome,
+                item.preco,
+                item.quantidade
+            )
 
-        icone.classList.remove("fa-moon");
-        icone.classList.add("fa-sun");
-
-    } else {
-
-        icone.classList.remove("fa-sun");
-        icone.classList.add("fa-moon");
-
+            produtos.push(produto)
+        })
     }
-});
+}
+
+const formulario = document.getElementById("produto-form")
+const botaoLimpar = document.getElementById("limpar-tabela")
+const elementoTotal = document.getElementById("total-estoque")
+
+formulario.addEventListener("submit", function (evento) {
+    evento.preventDefault()
+
+    const nome = document.getElementById("nome").value
+    const preco = document.getElementById("preco").value
+    const quantidade = document.getElementById("quantidade").value
+
+    const produto = new Produto(nome, preco, quantidade)
+
+    produtos.push(produto)
+    salvarProdutos()
+    atualizarInterface()
+    formulario.reset()
+})
+
+botaoLimpar.addEventListener("click", function () {
+    if (produtos.length === 0) {
+        alert("A tabela já está vazia!")
+        return
+    }
+
+    if (confirm("Tem certeza que deseja remover todos os produtos?")) {
+        produtos.length = 0
+        localStorage.removeItem(STORAGE_KEY)
+        atualizarInterface()
+    }
+})
+
+function excluirProduto(posicao) {
+    produtos.splice(posicao, 1)
+    salvarProdutos()
+    atualizarInterface()
+}
+
+function atualizarTotal() {
+    const valorTotal = produtos.reduce((total, item) => {
+        return total + item.calcularSubtotal()
+    }, 0)
+
+    elementoTotal.textContent = `Total em Estoque: R$ ${valorTotal.toFixed(2)}`
+}
+
+function montarTabela() {
+    const corpoTabela = document.querySelector("#tabela-produtos tbody")
+
+    corpoTabela.innerHTML = ""
+
+    produtos.forEach((item, posicao) => {
+        const novaLinha = document.createElement("tr")
+
+        novaLinha.innerHTML = `
+            <td>${item.nome}</td>
+            <td>R$ ${item.preco.toFixed(2)}</td>
+            <td>${item.quantidade}</td>
+            <td>R$ ${item.calcularSubtotal().toFixed(2)}</td>
+            <td>
+                <button class="btn-remover">Remover</button>
+            </td>
+        `
+
+        const botaoRemover = novaLinha.querySelector(".btn-remover")
+
+        botaoRemover.addEventListener("click", () => excluirProduto(posicao))
+
+        corpoTabela.appendChild(novaLinha)
+    })
+}
+
+function atualizarInterface() {
+    montarTabela()
+    atualizarTotal()
+}
+
+carregarProdutos()
+atualizarInterface()

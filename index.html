@@ -1,48 +1,49 @@
 <html lang="pt-br"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Meu Painel de Tarefas</title>
-
+    <title>Sistema de Estoque</title>
     <link rel="stylesheet" href="style.css">
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-
 <body>
+    <div class="container">
+        <h1>Cadastrar Produtos</h1>
+        <form id="produto-form">
+            <div class="form-group">
+                <label for="nome">Nome do produto:</label>
+                <input type="text" id="nome" placeholder="Ex. Notebook" required="">
+            </div>
 
-    <div class="cartao-aplicacao">
+            <div class="form-group">
+                <label for="preco">Preço:</label>
+                <input type="number" id="preco" step="0.01" placeholder="Ex. 3500.00" required="">
+            </div>
 
-        <header class="cabecalho-aplicacao">
-            <h1>Minhas Tarefas</h1>
+            <div class="form-group">
+                <label for="quantidade">Quantidade:</label>
+                <input type="number" id="quantidade" placeholder="Ex. 5" required="">
+            </div>
 
-            <button id="botao-modo-escuro" class="botao-principal">
-                <i class="fa-solid fa-moon"></i>
-            </button>
-        </header>
-
-        <div class="caixa-entrada">
-
-            <input type="text" id="campo-tarefa" placeholder="O que vamos fazer hoje?..." maxlength="40">
-
-            <button id="botao-adicionar" class="botao-principal">
-                <i class="fa-solid fa-plus"></i>
-                Adicionar
-            </button>
-
-        </div>
-
-        <ul id="lista-tarefas" class="lista-tarefas">
-        </ul>
-
-        <footer class="rodape-aplicacao">
-            <span id="contador-tarefas">
-                0 tarefas na lista
-            </span>
-        </footer>
+            <button type="submit" class="btn-primary">Adicionar Produto</button>
+        </form>
+         <div class="resumo-container">
+            <h3 id="total-estoque">Total em Estoque: R$ 0,00</h3>
+            <button id="limpar-tabela" class="btn-danger">Limpar Tudo</button>
+         </div>
+          <table id="tabela-produtos">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Preço Uni.</th>
+                    <th>Qtd.</th>
+                    <th>Sub-total</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
     </div>
 
     <script src="script.js"></script>
-
+    
 
 </body></html>
