@@ -1,117 +1,150 @@
-class Produto {
-    constructor(descricao, valor, qtd) {
-        this.nome = descricao
-        this.preco = parseFloat(valor)
-        this.quantidade = parseInt(qtd)
+let tarefas = JSON.parse(localStorage.getItem("tarefas")) || [];
+
+let entrada = document.getElementById("tarefa");
+let adicionar = document.getElementById("adicionar");
+let lista = document.getElementById("lista");
+let contador = document.getElementById("contador");
+let tema = document.getElementById("tema");
+let gifBox = document.getElementById("gif-box");
+let somConcluido = document.getElementById("som-concluido");
+
+function salvar() {
+    localStorage.setItem("tarefas", JSON.stringify(tarefas));
+    mostrar();
+}
+
+function mostrar() {
+    lista.innerHTML = "";
+
+    for (let i = 0; i < tarefas.length; i++) {
+        let item = document.createElement("li");
+
+        let cor = tarefas[i].cor || "#ffc5ce";
+
+        item.style.backgroundColor = cor;
+
+        if (tarefas[i].concluida) {
+            item.classList.add("feito");
+        }
+
+        item.innerHTML = `
+            <span class="texto-tarefa">${tarefas[i].descricao}</span>
+
+            <div class="botoes">
+                <button class="check" onclick="concluir(${i})">
+                    <i class="fa-solid fa-check"></i>
+                </button>
+
+                <button class="editar" onclick="editar(${i})">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+
+                <button class="cor-btn" onclick="abrirCor(${i})">
+                    <i class="fa-solid fa-palette"></i>
+                </button>
+
+                <input
+                    type="color"
+                    id="cor-${i}"
+                    class="seletor-cor"
+                    value="${cor}"
+                    onchange="mudarCor(${i}, this.value)"
+                >
+
+                <button class="apagar" onclick="apagar(${i})">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        `;
+
+        lista.appendChild(item);
     }
 
-    calcularSubtotal() {
-        return this.preco * this.quantidade
+    if (tarefas.length == 1) {
+        contador.innerText = "1 tarefa";
+    } else {
+        contador.innerText = tarefas.length + " tarefas";
     }
 }
 
-const produtos = []
-const chavestorage = "sistema_estoque_produtos"
+function adicionarTarefa() {
+    let texto = entrada.value.trim();
 
-function salvarProdutos() {
-    const dados = JSON.stringify(produtos)
-    localStorage.setItem(chavestorage, dados)
+    if (texto == "") {
+        alert("Digite uma tarefa primeiro!");
+        return;
+    }
+
+    tarefas.push({
+        descricao: texto,
+        concluida: false,
+        cor: "#ffc5ce"
+    });
+
+    entrada.value = "";
+    entrada.focus();
+
+    salvar();
 }
 
-function carregarProdutos() {
-    const dados = localStorage.getItem(chavestorage)
+function concluir(numero) {
+    tarefas[numero].concluida = !tarefas[numero].concluida;
 
-    if (dados) {
-        const produtosSalvos = JSON.parse(dados)
+    salvar();
 
-        produtosSalvos.forEach((item) => {
-            const produto = new Produto(
-                item.nome,
-                item.preco,
-                item.quantidade
-            )
+    if (tarefas[numero].concluida) {
+        somConcluido.currentTime = 0;
+        somConcluido.play();
 
-            produtos.push(produto)
-        })
+        gifBox.classList.add("mostrar");
+
+        setTimeout(function() {
+            gifBox.classList.remove("mostrar");
+        }, 2000);
     }
 }
 
-const formulario = document.getElementById("produto-form")
-const botaoLimpar = document.getElementById("limpar-tabela")
-const elementoTotal = document.getElementById("total-estoque")
+function apagar(numero) {
+    tarefas.splice(numero, 1);
+    salvar();
+}
 
-formulario.addEventListener("submit", function (evento) {
-    evento.preventDefault()
+function editar(numero) {
+    let novoTexto = prompt("Digite o novo nome:", tarefas[numero].descricao);
 
-    const nome = document.getElementById("nome").value
-    const preco = document.getElementById("preco").value
-    const quantidade = document.getElementById("quantidade").value
-
-    const produto = new Produto(nome, preco, quantidade)
-
-    produtos.push(produto)
-    salvarProdutos()
-    atualizarInterface()
-    formulario.reset()
-})
-
-botaoLimpar.addEventListener("click", function () {
-    if (produtos.length === 0) {
-        alert("A tabela já está vazia!")
-        return
+    if (novoTexto != null && novoTexto.trim() != "") {
+        tarefas[numero].descricao = novoTexto.trim();
+        salvar();
     }
+}
 
-    if (confirm("Tem certeza que deseja remover todos os produtos?")) {
-        produtos.length = 0
-        localStorage.removeItem(STORAGE_KEY)
-        atualizarInterface()
+function abrirCor(numero) {
+    document.getElementById("cor-" + numero).click();
+}
+
+function mudarCor(numero, cor) {
+    tarefas[numero].cor = cor;
+    salvar();
+}
+
+adicionar.addEventListener("click", adicionarTarefa);
+
+entrada.addEventListener("keydown", function(evento) {
+    if (evento.key == "Enter") {
+        adicionarTarefa();
     }
-})
+});
 
-function excluirProduto(posicao) {
-    produtos.splice(posicao, 1)
-    salvarProdutos()
-    atualizarInterface()
-}
+tema.addEventListener("click", function() {
+    document.body.classList.toggle("escuro");
 
-function atualizarTotal() {
-    const valorTotal = produtos.reduce((total, item) => {
-        return total + item.calcularSubtotal()
-    }, 0)
+    let icone = tema.querySelector("i");
 
-    elementoTotal.textContent = `Total em Estoque: R$ ${valorTotal.toFixed(2)}`
-}
+    if (document.body.classList.contains("escuro")) {
+        icone.className = "fa-solid fa-sun";
+    } else {
+        icone.className = "fa-solid fa-moon";
+    }
+});
 
-function montarTabela() {
-    const corpoTabela = document.querySelector("#tabela-produtos tbody")
-
-    corpoTabela.innerHTML = ""
-
-    produtos.forEach((item, posicao) => {
-        const novaLinha = document.createElement("tr")
-
-        novaLinha.innerHTML = `
-            <td>${item.nome}</td>
-            <td>R$ ${item.preco.toFixed(2)}</td>
-            <td>${item.quantidade}</td>
-            <td>R$ ${item.calcularSubtotal().toFixed(2)}</td>
-            <td>
-                <button class="btn-remover">Remover</button>
-            </td>
-        `
-
-        const botaoRemover = novaLinha.querySelector(".btn-remover")
-
-        botaoRemover.addEventListener("click", () => excluirProduto(posicao))
-
-        corpoTabela.appendChild(novaLinha)
-    })
-}
-
-function atualizarInterface() {
-    montarTabela()
-    atualizarTotal()
-}
-
-carregarProdutos()
-atualizarInterface()
+mostrar();
